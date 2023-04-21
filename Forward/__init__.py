@@ -68,7 +68,7 @@ def is_semantic_search_req(req: func.HttpRequest) -> bool:
 
 #this function is used to get the relative path from the request url
 def get_request_path(req: func.HttpRequest) -> str:
-    path = urlparse(req.url).path.replace('/api', '') + '?' + urlparse(req.url).query
+    path = urlparse(req.url).path + '?' + urlparse(req.url).query
     return path
 
 #this function is used to send the request again
