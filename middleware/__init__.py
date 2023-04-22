@@ -19,7 +19,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             return response
 
         #get search results
-        results = get_context(response)
+        content_field = req.get_json().get('contentField', os.environ["SEARCHSERVICE_FIELD_CONTENT"])
+        key_field = req.get_json().get('keyField', os.environ["SEARCHSERVICE_FIELD_KEY"])
+        results = get_context(response,content_field, key_field)
 
         #get question from the request body
         question = req.get_json().get('search', '')
@@ -106,7 +108,7 @@ def normalize_text(s):
     
     return s
 
-def get_context(response:func.HttpResponse) -> str:
+def get_context(response:func.HttpResponse, content_field:str, key_field:str) -> str:
         response_body = json.loads(response.get_body().decode('utf-8'))
 
         #retrieve results and filter based on threshold
@@ -121,14 +123,12 @@ def get_context(response:func.HttpResponse) -> str:
             results = results[:max_no_results]
 
         #clean content field from the results
-        field_content = os.environ['SEARCHSERVICE_FIELD_CONTENT']
-        results[field_content] = results[field_content].apply(normalize_text)
+        results[content_field] = results[content_field].apply(normalize_text)
 
         #concat content field and id field to create a new field
-        field_key = os.environ['SEARCHSERVICE_FIELD_KEY']
-        results[field_content] = results[field_key] + ": " +results[field_content]
+        results[content_field] = results[key_field] + ": " +results[key_field]
 
-        return results[field_content].str.cat(sep="\n")
+        return results[content_field].str.cat(sep="\n")
 
 def get_openai_answer(question:str, context:str, model:str)->str:
     answer = ""
