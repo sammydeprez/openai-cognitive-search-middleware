@@ -12,7 +12,7 @@ import openai
 def main(req: func.HttpRequest) -> func.HttpResponse:
     if is_semantic_search_req(req):
         #get semantic search results
-        response = forward_req(req)
+        response = forward_req(req, remove_middleware_fields = True)
 
         #check if the request was successful
         if response.status_code != 200:
@@ -74,10 +74,13 @@ def get_request_path(req: func.HttpRequest) -> str:
     return path
 
 #this function is used to send the request again
-def forward_req(req:func.HttpRequest) -> func.HttpResponse:
+def forward_req(req:func.HttpRequest, remove_middleware_fields:bool = False) -> func.HttpResponse:
     url = f"https://{os.environ['SEARCHSERVICE_NAME']}.search.windows.net" + get_request_path(req)
     headers = clean_headers(req.headers, keysToKeep = ["api-key", "Content-Type"])
     body = req.get_json()
+    if remove_middleware_fields:
+        body.pop('contentField', None)
+        body.pop('keyField', None)
     response = requests.request(method=req.method, url=url, headers=headers, json=body)
     resp_headers = clean_headers(response.headers, keysToRemove=["Content-Length", "Content-Encoding"])
     return func.HttpResponse(

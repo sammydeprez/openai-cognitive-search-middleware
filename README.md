@@ -22,3 +22,51 @@ The following table outlines the variables, their corresponding data types, and 
 | **OPENAI_API_TYPE** | String | "azure" for Azure OpenAI or "openai" for non-Azure OpenAI endpoints |
 | **OPENAI_API_DEFAULT_MODEL** | String | The default OpenAI model to be used, supporting gpt-35-turbo and gpt-4 |
 | **OPENAI_API_SYSTEM_MESSAGE** | String | The system message |
+
+
+## Usage
+There are two options for using the API endpoint.
+
+### Option 1 
+You can make a call without changing anything in your requests. This will only work if your content and key field are the same in every index and are configured in your environment variables. Below is an example call. For more detailed information about the document search API, click [here](https://learn.microsoft.com/en-us/rest/api/searchservice/search-documents).
+ 
+ ```
+POST https://<<YOUR ENDPOINT>>/indexes/index-all-data/docs/search?api-version=2021-04-30-Preview
+api-key: <YOUR KEY>
+Content-Type: application/json
+
+{
+    "search": "<The question that needs to be answered>",
+    "queryType": "semantic",
+    "semanticConfiguration": "<semantic configuration name>",
+    "queryLanguage": "<language in iso format like nl-BE>",
+    "searchFields": "content",
+    "select": "id,content",
+    "captions": "extractive",
+    "answers": "extractive",
+    "top": 10
+}
+ ```
+
+### Option 2
+By adding two extra fields (contentField & keyField) to the body, you can define which fields in your index need to be used. The downside is that this means you will need to update your application.
+```
+POST http://<<YOUR ENDPOINT>>/indexes/index-all-data/docs/search?api-version=2021-04-30-Preview
+api-key: <YOUR KEY>
+Content-Type: application/json
+
+{
+    "search": "<The question that needs to be answered>",
+    "queryType": "semantic",
+    "semanticConfiguration": "<semantic configuration name>",
+    "queryLanguage": "<language in iso format like nl-BE>",
+    "searchFields": "content",
+    "select": "id,content",
+    "captions": "extractive",
+    "answers": "extractive",
+    "top": 10,
+    "contentField": "content",
+    "keyField": "id"
+}
+ ```
+
