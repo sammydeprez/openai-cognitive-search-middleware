@@ -1,0 +1,60 @@
+<mxfile host="app.diagrams.net" modified="2023-04-24T11:59:54.367Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 Edg/112.0.1722.58" etag="jXg_z2J44dQFOAOVpieI" version="21.1.2" type="device">
+  <diagram name="Page-1" id="30Nd6JDmJHc_qbefnZ7S">
+    <mxGraphModel dx="371" dy="469" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-3" value="Search Query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="5sXdFJQrH7QZtxhXZs_R-1" target="5sXdFJQrH7QZtxhXZs_R-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="280" />
+              <mxPoint x="150" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-1" value="Application" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="130" y="200" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-4" value="Result Set +&lt;br&gt;Semantic Answer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="5sXdFJQrH7QZtxhXZs_R-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="250" y="240" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="250" y="300" />
+              <mxPoint x="250" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-2" value="Azure Cognitive Search&lt;br&gt;API Endpoint" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="130" y="320" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-6" value="Application" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="400" y="200" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="5sXdFJQrH7QZtxhXZs_R-7" target="5sXdFJQrH7QZtxhXZs_R-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-7" value="Middleware" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="400" y="320" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-8" value="Azure Cognitive Search&lt;br&gt;API Endpoint" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="400" y="440" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="5sXdFJQrH7QZtxhXZs_R-9">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="540" y="330" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="540" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5sXdFJQrH7QZtxhXZs_R-9" value="Action1&lt;br&gt;(Operation1)" style="html=1;align=center;verticalAlign=top;rounded=1;absoluteArcSize=1;arcSize=10;dashed=0;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="640" y="320" width="140" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

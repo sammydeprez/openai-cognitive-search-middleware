@@ -13,6 +13,7 @@
     "OPENAI_API_VERSION": "2023-03-15-preview",
     "OPENAI_API_TYPE": "azure",
     "OPENAI_API_DEFAULT_MODEL": "gpt-35-turbo",
+    "OPENAI_API_EMBEDDING_MODEL": "embedding",	
     "OPENAI_API_SYSTEM_MESSAGE": "This is a system message."
   }
 }
