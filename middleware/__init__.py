@@ -1,37 +1,51 @@
-import logging
 import azure.functions as func
-import re
-from urllib.parse import urlparse
-import requests
-import os
-import sys
-import json
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
+from services import request_handler as rh
+from services import openai_handler as oai
+from services import searchservice_handler as sh
 import pandas as pd
-import openai
+import os
+import json
 
-def main(req: func.HttpRequest) -> func.HttpResponse:
-    if is_semantic_search_req(req):
-        #get semantic search results
-        response = forward_req(req, remove_middleware_fields = True)
+ 
+app = FastAPI()
 
-        #check if the request was successful
-        if response.status_code != 200:
-            return response
+SEARCHSERVICE_FIELD_CONTENT = os.environ["SEARCHSERVICE_FIELD_CONTENT"]
+SEARCHSERVICE_FIELD_KEY = os.environ["SEARCHSERVICE_FIELD_KEY"]
+OPENAI_API_DEFAULT_MODEL = os.environ["OPENAI_API_DEFAULT_MODEL"]
 
-        #get search results
-        content_field = req.get_json().get('contentField', os.environ["SEARCHSERVICE_FIELD_CONTENT"])
-        key_field = req.get_json().get('keyField', os.environ["SEARCHSERVICE_FIELD_KEY"])
-        results = get_context(response,content_field, key_field)
+@app.post("/indexes/{index}/docs/search")
+async def search_docs(req: Request) -> Response:
+    body = await req.json()
 
-        #get question from the request body
-        question = req.get_json().get('search', '')
+    #if the request is not from openai, forward it to the search service
+    if body.get('answers', "openai") != "openai":
+        return await rh.forward_req(req)
+    
+    #if the request is from openai, forward it to the search service and generate an answer
+    #replace answers field in body with semantic
+    body['answers'] = "semantic"
+    req.body = json.dumps(body)
 
-        #get gpt answer
-        answer = get_openai_answer(question, results, os.environ['OPENAI_API_DEFAULT_MODEL'])
+    #if querytype is not vector, forward the request to the search service
+    response = await rh.forward_req(req)
+    if response.status_code != 200:
+        return response
+    
+    #if querytype is vector, alter the request
 
-        #update response body with the answer
-        response_body = json.loads(response.get_body().decode('utf-8'))
-        semantic_answer_replacement = { 
+
+
+    content_fields = body.get('contentField', SEARCHSERVICE_FIELD_CONTENT).split(",")
+    key_field = body.get('keyField', SEARCHSERVICE_FIELD_KEY)
+    data = json.loads(response.body)
+
+    question = body.get('search', '')
+
+    answer = oai.get_openai_answer(question, oai.get_context(data, content_fields, key_field), OPENAI_API_DEFAULT_MODEL)
+
+    semantic_answer_replacement = { 
             "@search.answers": [
                 {
                     "key": "openai",
@@ -41,128 +55,30 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 }
             ]
         }
-
-        response_body.update(semantic_answer_replacement)
-
-        return func.HttpResponse(
-            body=json.dumps(response_body),
-            status_code=response.status_code,
-            headers=response.headers)
-
-    else:
-        return forward_req(req)
-
-
-#this function is used to check if the request is for document search
-def is_semantic_search_req(req: func.HttpRequest) -> bool:
-
-    #check if the request is for document search
-    indexes = re.findall('indexes/([a-z0-9_-]*)/docs/search', req.url)
-    if len(indexes) == 0 or req.method != 'POST':
-        return False
     
-    #check if the request is for semantic search
-    body = req.get_json()
-    if body.get('queryType', '') != 'semantic':
-        return False
-    
-    return True
+    data.update(semantic_answer_replacement)
+    headers = rh.clean_headers(response.headers, keysToRemove=["Content-Length", "Content-Encoding"])
+    #TODO: add headers to response
+    return Response(content=json.dumps(data), status_code=response.status_code)
 
-#this function is used to get the relative path from the request url
-def get_request_path(req: func.HttpRequest) -> str:
-    path = urlparse(req.url).path + '?' + urlparse(req.url).query
-    return path
-
-#this function is used to send the request again
-def forward_req(req:func.HttpRequest, remove_middleware_fields:bool = False) -> func.HttpResponse:
-    url = f"https://{os.environ['SEARCHSERVICE_NAME']}.search.windows.net" + get_request_path(req)
-    headers = clean_headers(req.headers, keysToKeep = ["api-key", "Content-Type"])
-    body = req.get_json()
-    if remove_middleware_fields:
-        body.pop('contentField', None)
-        body.pop('keyField', None)
-    response = requests.request(method=req.method, url=url, headers=headers, json=body)
-    resp_headers = clean_headers(response.headers, keysToRemove=["Content-Length", "Content-Encoding"])
-    return func.HttpResponse(
-        body=response.text,
-        status_code=response.status_code,
-        headers=resp_headers)
-
-#this function is used to clean the headers
-def clean_headers(headers: dict, keysToRemove:list = [], keysToKeep:list = []) -> dict:
-    new_headers = {}
-    for key, value in headers.items():
-        if len(keysToRemove) > 0:
-            if key not in keysToRemove:
-                new_headers[key] = value
-        if len(keysToKeep) > 0:
-            if key in keysToKeep:
-                new_headers[key] = value
-    return new_headers
-
-def normalize_text(s):
-    s = re.sub(r'\s+',  ' ', s).strip()
-    s = re.sub(r". ,","",s)
-    # remove all instances of multiple spaces
-    s = s.replace("..",".")
-    s = s.replace(". .",".")
-    s = s.replace("\n", "")
-    s = s.strip()
-    
-    return s
-
-def get_context(response:func.HttpResponse, content_field:str, key_field:str) -> str:
-        response_body = json.loads(response.get_body().decode('utf-8'))
-
-        #retrieve results and filter based on threshold
-        results = pd.DataFrame.from_dict(response_body['value'])
-        highest_score = results["@search.rerankerScore"].max()
-        threshold = highest_score * float(os.environ['SEARCHSERVICE_SCORE_THRESHOLD'])
-        results = results[results["@search.rerankerScore"] >= threshold]
-
-        #filter based on max number of results
-        max_no_results = int(os.environ['SEARCHSERVICE_MAX_NO_RESULTS'])
-        if len(results) > max_no_results:
-            results = results[:max_no_results]
-
-        #clean content field from the results
-        results[content_field] = results[content_field].apply(normalize_text)
-
-        #concat content field and id field to create a new field
-        results[content_field] = results[key_field] + ": " +results[key_field]
-
-        return results[content_field].str.cat(sep="\n")
-
-def get_openai_answer(question:str, context:str, model:str)->str:
-    answer = ""
-
-    if context == "":
-        return answer
-    
-    system_message = os.environ["OPENAI_API_SYSTEM_MESSAGE"]
-    prompt = [
-        {
-            "role":"system",
-            "content": system_message
-        },
-        {
-            "role":"user",
-            "content":f"""### SOURCES:
-            {context}"""
-        },
-        {
-            "role":"user",
-            "content": f"""### QUESTION:
-            {question}"""
-        }
-    ]
+@app.post("/indexes/{index}/docs/index")
+async def index_docs(req: Request, index: str):
     try:
-        answer = openai.ChatCompletion.create(
-            engine=model,
-            max_tokens=100,
-            temperature=0.3,
-            messages = prompt)["choices"][0]["message"]["content"]
+        sh.validate_vector_fields(SEARCHSERVICE_FIELD_CONTENT.split(","), search_index=index, search_service_key=req.headers["api-key"])
     except Exception as e:
-        logging.info(e)
+        return Response(content=str(e), status_code=400)
     
-    return answer
+    body = await req.json()
+    documents = body.get('value', [])
+    content_fields = body.get('contentField', SEARCHSERVICE_FIELD_CONTENT).split(",")
+    body['value'] = oai.generate_vector(documents, content_fields).to_dict(orient='records')
+    req._body = json.dumps(body)
+    return await rh.forward_req(req)
+
+@app.api_route("/{path_name:path}")
+async def catch_all(request: Request) -> Response:
+    return await rh.forward_req(request)
+
+async def main(req: func.HttpRequest, context: func.Context) -> func.HttpResponse:
+    """Each request is redirected to the ASGI handler."""
+    return await func.AsgiMiddleware(app).handle_async(req, context)
