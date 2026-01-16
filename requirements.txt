@@ -1,9 +1,9 @@
 --extra-index-url https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/
 
 azure-functions==1.14.0
-requests==2.31.0
+requests==2.32.4
 pandas==2.0.2
 openai==0.27.8
 fastapi==0.96.0
 azure-search-documents==11.4.0a20230509004
-azure-core==1.27.0
+azure-core==1.38.0
